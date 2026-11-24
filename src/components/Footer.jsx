@@ -1,152 +1,156 @@
 import React from 'react';
 import { MapPin, Phone, Clock, Instagram, Facebook, MessageCircle } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
-import { BUSINESS_INFO } from '../data/translations';
+import { useLanguage } from './LanguageContext.jsx';
+import { CLINIC_INFO } from '../translations.js';
 import logoImg from '../assets/images/logo.png';
 
 export default function Footer({ onOpenBooking }) {
   const { lang, t } = useLanguage();
-  const whatsappHref = `https://wa.me/${BUSINESS_INFO.whatsappNumber}`;
+  const addressText = lang === 'ar' ? CLINIC_INFO.addressAr : CLINIC_INFO.addressFr;
 
   return (
     <>
-      <footer className="bg-brand-plum text-white pt-16 pb-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-12 gap-10 pb-12 border-b border-white/15">
-            {/* Brand Column */}
-            <div className="md:col-span-5 space-y-5">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-brand-cream p-2 flex items-center justify-center shrink-0 shadow-md">
+      <footer className="bg-brand-espresso text-white pt-16 pb-10 border-t border-brand-gold/30">
+        <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-white/15">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3.5">
+                <div className="p-2 rounded-2xl bg-brand-ivory/95 shrink-0">
                   <img
                     src={logoImg}
-                    alt={BUSINESS_INFO.clinicNameFr}
+                    alt={CLINIC_INFO.clinicNameFr}
                     className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
                   />
                 </div>
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-extrabold text-white">
-                    {t.brandTitle}
-                  </h3>
-                  <p className="text-sm sm:text-base text-brand-goldLight font-medium">
-                    {t.brandSubtitle}
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-white">
+                    {t.nav.brand}
+                  </h2>
+                  <p className="text-sm text-brand-gold-light font-semibold">
+                    {t.nav.subtitle}
                   </p>
                 </div>
               </div>
-
-              <p className="text-sm sm:text-base text-white/85 leading-relaxed max-w-md">
+              <p className="text-sm sm:text-base text-white/85 leading-relaxed">
                 {t.footer.description}
               </p>
+            </div>
 
-              {/* Social Icons */}
-              <div className="flex items-center gap-3 pt-1">
+            <div className="space-y-4">
+              <h3 className="text-lg sm:text-xl font-extrabold text-brand-gold-light">
+                {t.footer.quickLinksTitle}
+              </h3>
+              <ul className="space-y-2.5 text-sm sm:text-base">
+                <li>
+                  <a href="#accueil" className="text-white/85 hover:text-brand-gold-light transition-colors">
+                    {t.nav.home}
+                  </a>
+                </li>
+                <li>
+                  <a href="#medecin" className="text-white/85 hover:text-brand-gold-light transition-colors">
+                    {t.nav.about}
+                  </a>
+                </li>
+                <li>
+                  <a href="#soins" className="text-white/85 hover:text-brand-gold-light transition-colors">
+                    {t.nav.services}
+                  </a>
+                </li>
+                <li>
+                  <a href="#cabinet" className="text-white/85 hover:text-brand-gold-light transition-colors">
+                    {t.nav.cabinet}
+                  </a>
+                </li>
+                <li>
+                  <a href="#avis" className="text-white/85 hover:text-brand-gold-light transition-colors">
+                    {t.nav.reviews}
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg sm:text-xl font-extrabold text-brand-gold-light">
+                {t.footer.servicesTitle}
+              </h3>
+              <ul className="space-y-2.5 text-sm sm:text-base">
+                {t.services.items.slice(0, 5).map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => onOpenBooking(item.title)}
+                      className="text-start text-white/85 hover:text-brand-gold-light transition-colors"
+                    >
+                      {item.title}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg sm:text-xl font-extrabold text-brand-gold-light">
+                {t.footer.contactTitle}
+              </h3>
+              <ul className="space-y-3 text-sm sm:text-base text-white/90">
+                <li className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-brand-gold-light shrink-0 mt-0.5" />
+                  <span>{addressText}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Phone className="w-5 h-5 text-brand-gold-light shrink-0" />
+                  <a
+                    href={`tel:${CLINIC_INFO.phoneRaw}`}
+                    dir="ltr"
+                    className="font-bold hover:text-brand-gold-light transition-colors"
+                  >
+                    {CLINIC_INFO.phoneDisplay}
+                  </a>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-brand-gold-light shrink-0 mt-0.5" />
+                  <span>{t.hero.quickCards.hoursValue}</span>
+                </li>
+              </ul>
+
+              <div className="flex items-center gap-3 pt-2">
                 <a
-                  href={BUSINESS_INFO.instagramUrl}
+                  href={CLINIC_INFO.instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Instagram"
-                  className="w-11 h-11 rounded-full bg-white/10 hover:bg-brand-gold hover:text-brand-plumDark text-white flex items-center justify-center transition-colors"
+                  aria-label="Instagram Dr. Fathi Sana"
+                  className="p-2.5 rounded-full bg-white/10 hover:bg-brand-gold hover:text-brand-espresso text-white transition-colors"
                 >
                   <Instagram className="w-5 h-5" />
                 </a>
                 <a
-                  href={BUSINESS_INFO.facebookUrl}
+                  href={CLINIC_INFO.facebookUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Facebook"
-                  className="w-11 h-11 rounded-full bg-white/10 hover:bg-brand-gold hover:text-brand-plumDark text-white flex items-center justify-center transition-colors"
+                  aria-label="Facebook Dr. Fathi Sana"
+                  className="p-2.5 rounded-full bg-white/10 hover:bg-brand-gold hover:text-brand-espresso text-white transition-colors"
                 >
                   <Facebook className="w-5 h-5" />
                 </a>
               </div>
             </div>
-
-            {/* Quick Links Column */}
-            <div className="md:col-span-3 space-y-4">
-              <h4 className="text-lg sm:text-xl font-bold text-brand-goldLight">
-                {t.footer.quickLinksTitle}
-              </h4>
-              <ul className="space-y-3 text-sm sm:text-base">
-                <li>
-                  <a href="#accueil" className="text-white/85 hover:text-white transition-colors">
-                    {t.nav.home}
-                  </a>
-                </li>
-                <li>
-                  <a href="#docteur" className="text-white/85 hover:text-white transition-colors">
-                    {t.nav.about}
-                  </a>
-                </li>
-                <li>
-                  <a href="#soins" className="text-white/85 hover:text-white transition-colors">
-                    {t.nav.services}
-                  </a>
-                </li>
-                <li>
-                  <a href="#cabinet" className="text-white/85 hover:text-white transition-colors">
-                    {t.nav.cabinet}
-                  </a>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => onOpenBooking('')}
-                    className="text-brand-goldLight hover:underline font-bold"
-                  >
-                    {t.nav.bookBtn}
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Coordonnées Column */}
-            <div className="md:col-span-4 space-y-4">
-              <h4 className="text-lg sm:text-xl font-bold text-brand-goldLight">
-                {t.footer.contactTitle}
-              </h4>
-              <ul className="space-y-4 text-sm sm:text-base">
-                <li className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-brand-goldLight shrink-0 mt-1" />
-                  <span className="text-white/90">
-                    {lang === 'ar' ? BUSINESS_INFO.addressAr : BUSINESS_INFO.addressFr}
-                  </span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-brand-goldLight shrink-0" />
-                  <a
-                    href={`tel:${BUSINESS_INFO.phoneTel}`}
-                    dir="ltr"
-                    className="text-white font-bold hover:text-brand-goldLight transition-colors"
-                  >
-                    +212 6 70 70 93 83
-                  </a>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-brand-goldLight shrink-0 mt-1" />
-                  <span className="text-white/85">{t.footer.hoursLabel}</span>
-                </li>
-              </ul>
-            </div>
           </div>
 
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/75">
-            <p>
-              © {new Date().getFullYear()} {BUSINESS_INFO.clinicNameFr}. {t.footer.rights}
-            </p>
-            <p className="text-brand-goldLight font-medium">Agdal • Rabat, Maroc</p>
+          <div className="pt-8 text-center text-sm sm:text-base text-white/75">
+            <p>{t.footer.copyright}</p>
           </div>
         </div>
       </footer>
 
-      {/* Floating WhatsApp Direct Button */}
       <a
-        href={whatsappHref}
+        href={`https://wa.me/${CLINIC_INFO.whatsappNumber}`}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={t.footer.whatsappFloat}
-        className="fixed bottom-6 end-6 z-40 inline-flex items-center gap-2.5 px-5 py-3.5 rounded-full bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-sm shadow-xl hover:scale-105 transition-all"
+        aria-label="WhatsApp Cabinet Dr. Fathi Sana"
+        className="fixed bottom-5 end-5 z-30 inline-flex items-center gap-2.5 px-5 py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-glass-lg transition-transform hover:scale-105"
       >
-        <MessageCircle className="w-5 h-5 fill-white" />
-        <span className="hidden sm:inline">{t.footer.whatsappFloat}</span>
+        <MessageCircle className="w-5 h-5 shrink-0" />
+        <span className="text-sm">{t.footer.whatsappFloatLabel}</span>
       </a>
     </>
   );

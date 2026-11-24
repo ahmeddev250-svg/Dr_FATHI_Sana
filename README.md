@@ -1,17 +1,24 @@
-# Cabinet Médical Dr. FATHI Sana — Site Web Officiel
+# Cabinet Médical Dr. Fathi Sana — Site Web Officiel
 
-Application web bilingue (Français / Arabe RTL) dédiée au **Cabinet Médical Dr. FATHI Sana** (Médecine Esthétique & Lasers Médicaux — 60 Rue Jabal Oukaïmeden, Appt 9, Agdal, Rabat).
+Application web bilingue (Français / Arabe RTL) dédiée au **Cabinet Médical Dr. Fathi Sana** à Rabat (Médecine Esthétique, Anti-Âge & Lasers Médicaux).
 
-## Installation et Lancement
+## Fonctionnalités Principales
+
+- **Identité Visuelle Authentique** : Logo officiel transparent, photographies réelles du cabinet, des soins et du Dr. Fathi Sana.
+- **Statut Ouvert / Fermé en Temps Réel** : Synchronisé sur le fuseau horaire `Africa/Casablanca` avec indicateur dynamique et prochain créneau d'ouverture/fermeture.
+- **Prise de Rendez-vous & WhatsApp** : Créneaux fixes de **30 minutes** synchronisés avec les horaires du cabinet (Lun–Ven 10:00–18:30, Sam 10:00–13:30) et génération automatique du message WhatsApp bilingue.
+- **Bilingue FR / AR (RTL)** : Bascule instantanée entre le français (`dir="ltr"`) et l'arabe (`dir="rtl"`).
+
+## Installation & Démarrage
 
 ```bash
 # 1. Installer les dépendances
 npm install
 
-# 2. Démarrer le serveur de développement local
+# 2. Lancer le serveur de développement
 npm run dev
 
-# 3. Aperçu sur mobile / réseau local
+# 3. Prévisualiser sur mobile sur le réseau local
 npm run dev -- --host
 
 # 4. Générer le build de production

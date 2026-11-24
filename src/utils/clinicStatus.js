@@ -1,50 +1,61 @@
-// Schedule for Cabinet Médical Dr. FATHI Sana (Timezone: Africa/Casablanca)
-// Monday - Friday: 10:00 - 18:30 (continuous)
-// Saturday: 10:00 - 14:00
-// Sunday: Closed
+/**
+ * Real-time Open / Closed status & 30-minute appointment slot generator
+ * Synchronized with Africa/Casablanca timezone for Cabinet Médical Dr. Fathi Sana
+ * Schedule:
+ * - Monday to Friday (1..5): 10:00 – 18:30 (continuous)
+ * - Saturday (6): 10:00 – 13:30
+ * - Sunday (0): Closed
+ */
 
-export const CLINIC_SCHEDULE = {
-  1: { open: 10 * 60, close: 18 * 60 + 30, labelFr: '10h00 – 18h30', labelAr: '10:00 – 18:30' },
-  2: { open: 10 * 60, close: 18 * 60 + 30, labelFr: '10h00 – 18h30', labelAr: '10:00 – 18:30' },
-  3: { open: 10 * 60, close: 18 * 60 + 30, labelFr: '10h00 – 18h30', labelAr: '10:00 – 18:30' },
-  4: { open: 10 * 60, close: 18 * 60 + 30, labelFr: '10h00 – 18h30', labelAr: '10:00 – 18:30' },
-  5: { open: 10 * 60, close: 18 * 60 + 30, labelFr: '10h00 – 18h30', labelAr: '10:00 – 18:30' },
-  6: { open: 10 * 60, close: 14 * 60, labelFr: '10h00 – 14h00', labelAr: '10:00 – 14:00' },
-  0: null,
+export const CLINIC_TIMEZONE = 'Africa/Casablanca';
+
+export const WEEKLY_HOURS = {
+  0: null, // Sunday: Closed
+  1: { open: 10 * 60, close: 18 * 60 + 30, labelFr: '10:00 – 18:30', labelAr: '10:00 – 18:30' },
+  2: { open: 10 * 60, close: 18 * 60 + 30, labelFr: '10:00 – 18:30', labelAr: '10:00 – 18:30' },
+  3: { open: 10 * 60, close: 18 * 60 + 30, labelFr: '10:00 – 18:30', labelAr: '10:00 – 18:30' },
+  4: { open: 10 * 60, close: 18 * 60 + 30, labelFr: '10:00 – 18:30', labelAr: '10:00 – 18:30' },
+  5: { open: 10 * 60, close: 18 * 60 + 30, labelFr: '10:00 – 18:30', labelAr: '10:00 – 18:30' },
+  6: { open: 10 * 60, close: 13 * 60 + 30, labelFr: '10:00 – 13:30', labelAr: '10:00 – 13:30' },
 };
 
 const DAY_NAMES = {
   fr: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
-  ar: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+  ar: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
 };
 
-export function getCasablancaNow() {
-  const now = new Date();
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Africa/Casablanca',
-    weekday: 'short',
+export function getCasablancaNow(referenceDate = new Date()) {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: CLINIC_TIMEZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
+    second: '2-digit',
     hour12: false,
+    weekday: 'short',
   });
 
-  const parts = formatter.formatToParts(now);
+  const parts = formatter.formatToParts(referenceDate);
   const map = {};
-  for (const p of parts) {
-    map[p.type] = p.value;
+  for (const part of parts) {
+    map[part.type] = part.value;
   }
 
   const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-  const dayOfWeek = weekdayMap[map.weekday] ?? now.getDay();
-  const hour = parseInt(map.hour === '24' ? '0' : map.hour, 10);
+  const dayOfWeek = weekdayMap[map.weekday] ?? referenceDate.getDay();
+  const hour = parseInt(map.hour, 10) % 24;
   const minute = parseInt(map.minute, 10);
-  const minutesSinceMidnight = hour * 60 + minute;
   const dateStr = `${map.year}-${map.month}-${map.day}`;
 
-  return { dayOfWeek, hour, minute, minutesSinceMidnight, dateStr };
+  return {
+    dayOfWeek,
+    hour,
+    minute,
+    totalMinutes: hour * 60 + minute,
+    dateStr,
+  };
 }
 
 function formatMinutes(totalMins) {
@@ -53,33 +64,41 @@ function formatMinutes(totalMins) {
   return `${h}:${m}`;
 }
 
-export function getClinicStatus(lang = 'fr') {
-  const { dayOfWeek, minutesSinceMidnight } = getCasablancaNow();
-  const todaySched = CLINIC_SCHEDULE[dayOfWeek];
+export function getClinicStatus(lang = 'fr', referenceDate = new Date()) {
+  const now = getCasablancaNow(referenceDate);
+  const todayHours = WEEKLY_HOURS[now.dayOfWeek];
 
-  if (todaySched && minutesSinceMidnight >= todaySched.open && minutesSinceMidnight < todaySched.close) {
-    const closeTime = formatMinutes(todaySched.close);
+  if (todayHours && now.totalMinutes >= todayHours.open && now.totalMinutes < todayHours.close) {
+    const closeTime = formatMinutes(todayHours.close);
     return {
       isOpen: true,
       badge: lang === 'ar' ? 'مفتوح الآن' : 'Ouvert maintenant',
-      detail: lang === 'ar' ? `يغلق على الساعة ${closeTime}` : `Ferme à ${closeTime}`,
+      detail:
+        lang === 'ar'
+          ? `يغلق اليوم على الساعة ${closeTime}`
+          : `Ferme aujourd'hui à ${closeTime}`,
     };
   }
 
-  if (todaySched && minutesSinceMidnight < todaySched.open) {
-    const openTime = formatMinutes(todaySched.open);
+  // Closed right now: determine when it next opens
+  if (todayHours && now.totalMinutes < todayHours.open) {
+    const openTime = formatMinutes(todayHours.open);
     return {
       isOpen: false,
       badge: lang === 'ar' ? 'مغلق حالياً' : 'Fermé actuellement',
-      detail: lang === 'ar' ? `يفتح اليوم على ${openTime}` : `Ouvre aujourd'hui à ${openTime}`,
+      detail:
+        lang === 'ar'
+          ? `يفتح اليوم على الساعة ${openTime}`
+          : `Ouvre aujourd'hui à ${openTime}`,
     };
   }
 
+  // Find next open day
   for (let offset = 1; offset <= 7; offset++) {
-    const nextDay = (dayOfWeek + offset) % 7;
-    const sched = CLINIC_SCHEDULE[nextDay];
-    if (sched) {
-      const openTime = formatMinutes(sched.open);
+    const nextDay = (now.dayOfWeek + offset) % 7;
+    const nextHours = WEEKLY_HOURS[nextDay];
+    if (nextHours) {
+      const openTime = formatMinutes(nextHours.open);
       const dayLabel =
         offset === 1
           ? lang === 'ar'
@@ -91,7 +110,7 @@ export function getClinicStatus(lang = 'fr') {
         badge: lang === 'ar' ? 'مغلق حالياً' : 'Fermé actuellement',
         detail:
           lang === 'ar'
-            ? `يفتح ${dayLabel} على ${openTime}`
+            ? `يفتح ${dayLabel} على الساعة ${openTime}`
             : `Ouvre ${dayLabel} à ${openTime}`,
       };
     }
@@ -104,28 +123,50 @@ export function getClinicStatus(lang = 'fr') {
   };
 }
 
-export function generateTimeSlotsForDate(dateStr) {
+/**
+ * Generate fixed 30-minute appointment slots for a given YYYY-MM-DD date string.
+ * Disables slots that have already passed when dateStr === today in Africa/Casablanca.
+ */
+export function generateThirtyMinuteSlots(dateStr, referenceDate = new Date()) {
   if (!dateStr) return [];
+
   const [y, m, d] = dateStr.split('-').map(Number);
-  const dateObj = new Date(y, m - 1, d);
-  const dayOfWeek = dateObj.getDay();
-  const sched = CLINIC_SCHEDULE[dayOfWeek];
+  if (!y || !m || !d) return [];
 
-  if (!sched) return [];
+  // Create UTC noon date to safely determine weekday without DST drift
+  const utcDate = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  const dayOfWeek = utcDate.getUTCDay();
+  const schedule = WEEKLY_HOURS[dayOfWeek];
 
-  const { dateStr: todayStr, minutesSinceMidnight } = getCasablancaNow();
-  const isToday = dateStr === todayStr;
+  if (!schedule) {
+    return [];
+  }
+
+  const now = getCasablancaNow(referenceDate);
+  const isToday = dateStr === now.dateStr;
+  const isPastDate = dateStr < now.dateStr;
+
+  if (isPastDate) {
+    return [];
+  }
 
   const slots = [];
-  for (let start = sched.open; start + 30 <= sched.close; start += 30) {
+  for (let start = schedule.open; start + 30 <= schedule.close; start += 30) {
     const end = start + 30;
-    const label = `${formatMinutes(start)} – ${formatMinutes(end)}`;
-    const disabled = isToday && start <= minutesSinceMidnight + 15;
+    const startStr = formatMinutes(start);
+    const endStr = formatMinutes(end);
+    const label = `${startStr} – ${endStr}`;
+    // Require at least 15 minutes lead time for same-day slots
+    const disabled = isToday && start <= now.totalMinutes + 15;
+
     slots.push({
-      value: label,
+      id: startStr,
+      start: startStr,
+      end: endStr,
       label,
       disabled,
     });
   }
+
   return slots;
 }

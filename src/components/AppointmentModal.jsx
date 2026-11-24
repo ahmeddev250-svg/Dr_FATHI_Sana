@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Calendar, Clock, Send, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
-import { BUSINESS_INFO } from '../data/translations';
-import { getCasablancaNow, generateTimeSlotsForDate } from '../utils/clinicStatus';
+import { X, Clock, MessageCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useLanguage } from './LanguageContext.jsx';
+import { CLINIC_INFO } from '../translations.js';
+import { getCasablancaNow, generateThirtyMinuteSlots } from '../utils/clinicStatus.js';
 
 export default function AppointmentModal({ isOpen, onClose, initialService = '' }) {
   const { lang, t } = useLanguage();
@@ -10,42 +10,66 @@ export default function AppointmentModal({ isOpen, onClose, initialService = '' 
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [service, setService] = useState(initialService);
+  const [service, setService] = useState('');
   const [date, setDate] = useState(todayStr);
-  const [timeSlot, setTimeSlot] = useState('');
+  const [selectedSlot, setSelectedSlot] = useState('');
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (initialService) {
-      setService(initialService);
+    if (isOpen) {
+      setService(initialService || t.modal.serviceDefault);
+      setErrors({});
+      setSubmitted(false);
     }
-  }, [initialService]);
-
-  const slots = useMemo(() => generateTimeSlotsForDate(date), [date]);
-
-  const isSunday = useMemo(() => {
-    if (!date) return false;
-    const [y, m, d] = date.split('-').map(Number);
-    return new Date(y, m - 1, d).getDay() === 0;
-  }, [date]);
+  }, [isOpen, initialService, t.modal.serviceDefault]);
 
   useEffect(() => {
-    setTimeSlot('');
-  }, [date]);
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  const slots = useMemo(() => generateThirtyMinuteSlots(date), [date]);
+
+  const handleDateChange = (newDate) => {
+    setDate(newDate);
+    setSelectedSlot('');
+    if (errors.date || errors.time) {
+      setErrors((prev) => ({ ...prev, date: '', time: '' }));
+    }
+  };
 
   if (!isOpen) return null;
 
+  const isSunday = date ? new Date(`${date}T12:00:00Z`).getUTCDay() === 0 : false;
+
   const validate = () => {
     const nextErrors = {};
-    if (!name.trim()) nextErrors.name = t.booking.errors.name;
-    if (!phone.trim() || phone.replace(/\D/g, '').length < 8) {
-      nextErrors.phone = t.booking.errors.phone;
+    if (!name.trim() || name.trim().length < 2) {
+      nextErrors.name = t.modal.errors.name;
     }
-    if (!service) nextErrors.service = t.booking.errors.service;
-    if (!date || date < todayStr || isSunday) nextErrors.date = t.booking.errors.date;
-    if (!timeSlot) nextErrors.time = t.booking.errors.time;
+    const cleanPhone = phone.replace(/[\s\-().]/g, '');
+    if (!cleanPhone || cleanPhone.length < 8) {
+      nextErrors.phone = t.modal.errors.phone;
+    }
+    if (!date || date < todayStr) {
+      nextErrors.date = t.modal.errors.date;
+    }
+    if (!selectedSlot) {
+      nextErrors.time = t.modal.errors.time;
+    }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -54,209 +78,223 @@ export default function AppointmentModal({ isOpen, onClose, initialService = '' 
     e.preventDefault();
     if (!validate()) return;
 
-    const cleanNotes = notes.trim() || (lang === 'ar' ? 'لا توجد ملاحظات' : 'Aucune');
+    const notesText = notes.trim() || (lang === 'ar' ? 'لا توجد' : 'Aucune');
+    const chosenService = service || t.modal.serviceDefault;
 
     const message =
       lang === 'ar'
-        ? `مرحباً،\n\nأرغب في حجز موعد.\n\nالاسم : ${name.trim()}\nرقم الهاتف : ${phone.trim()}\nالخدمة المطلوبة : ${service}\nالتاريخ : ${date}\nالوقت : ${timeSlot}\nمدة الموعد : 30 دقيقة\nملاحظات : ${cleanNotes}\n\nشكراً، يرجى تأكيد الموعد.`
-        : `Bonjour,\n\nJe souhaite prendre un rendez-vous.\n\nNom : ${name.trim()}\nTéléphone : ${phone.trim()}\nPrestation : ${service}\nDate : ${date}\nHeure : ${timeSlot}\nDurée : 30 minutes\nNotes : ${cleanNotes}\n\nMerci de me confirmer la disponibilité.`;
+        ? `مرحباً،\n\nأرغب في حجز موعد.\n\nالاسم : ${name.trim()}\nرقم الهاتف : ${phone.trim()}\nالخدمة المطلوبة : ${chosenService}\nالتاريخ : ${date}\nالوقت : ${selectedSlot}\nمدة الموعد : 30 دقيقة\nملاحظات : ${notesText}\n\nشكراً، يرجى تأكيد الموعد.`
+        : `Bonjour,\n\nJe souhaite prendre un rendez-vous.\n\nNom : ${name.trim()}\nTéléphone : ${phone.trim()}\nPrestation : ${chosenService}\nDate : ${date}\nHeure : ${selectedSlot}\nDurée : 30 minutes\nNotes : ${notesText}\n\nMerci de me confirmer la disponibilité.`;
 
-    const url = `https://wa.me/${BUSINESS_INFO.whatsappNumber}?text=${encodeURIComponent(message)}`;
+    const waUrl = `https://wa.me/${CLINIC_INFO.whatsappNumber}?text=${encodeURIComponent(message)}`;
     setSubmitted(true);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
+
+  const serviceOptions = [t.modal.serviceDefault, ...t.services.items.map((item) => item.title)];
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-plumDark/60 backdrop-blur-sm overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-brand-espresso-deep/65 backdrop-blur-sm"
+      onClick={onClose}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="appointment-modal-title"
     >
-      <div className="relative w-full max-w-2xl bg-white/95 backdrop-blur-xl rounded-[28px] shadow-2xl border border-brand-plum/15 p-6 sm:p-8 my-8">
-        {/* Close Button */}
-        <button
-          type="button"
-          onClick={() => {
-            setSubmitted(false);
-            onClose();
-          }}
-          className="absolute top-5 end-5 p-2 rounded-full bg-brand-sand text-brand-plum hover:bg-brand-plum hover:text-white transition-colors"
-          aria-label="Fermer"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Modal Header */}
-        <div className="mb-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-brand-plum/10 text-brand-plum text-xs font-bold mb-2">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>{BUSINESS_INFO.clinicNameFr}</span>
+      <div
+        className="w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden rounded-3xl bg-brand-ivory border border-brand-gold/35 shadow-glass-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-brand-espresso text-white border-b border-brand-gold/30 shrink-0">
+          <div>
+            <h2 id="appointment-modal-title" className="text-lg sm:text-xl font-extrabold">
+              {t.modal.title}
+            </h2>
+            <p className="text-xs sm:text-sm text-brand-gold-light font-medium">
+              {t.modal.subtitle}
+            </p>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-brand-plum">
-            {t.booking.title}
-          </h2>
-          <p className="text-sm text-brand-ink/75 mt-1">{t.booking.subtitle}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t.modal.closeBtn}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold transition-colors shrink-0"
+          >
+            <X className="w-4 h-4" />
+            <span>{t.modal.closeBtn}</span>
+          </button>
         </div>
 
-        {submitted && (
-          <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-            <div className="text-sm text-emerald-900">
-              <p className="font-bold">{t.booking.submittedTitle}</p>
-              <p className="mt-0.5">{t.booking.submittedBody}</p>
+        <form onSubmit={handleSubmit} className="overflow-y-auto p-6 space-y-5">
+          {submitted && (
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-3 text-emerald-900 text-sm">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <p className="font-medium leading-relaxed">{t.modal.successBanner}</p>
             </div>
-          </div>
-        )}
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid sm:grid-cols-2 gap-4">
-            {/* Client Name */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-brand-ink mb-1.5">
-                {t.booking.nameLabel}
+              <label className="block text-sm font-bold text-brand-espresso mb-1.5">
+                {t.modal.nameLabel}
               </label>
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t.booking.namePlaceholder}
-                className="w-full px-4 py-3 rounded-xl border border-brand-plum/20 bg-white focus:outline-none focus:border-brand-plum text-sm"
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
+                }}
+                placeholder={t.modal.namePlaceholder}
+                className="w-full px-4 py-3 rounded-xl bg-white border border-brand-sand focus:border-brand-gold focus:outline-none text-sm sm:text-base text-brand-espresso"
               />
               {errors.name && (
-                <p className="text-xs text-red-600 font-semibold mt-1">{errors.name}</p>
+                <p className="text-xs font-semibold text-red-600 mt-1">{errors.name}</p>
               )}
             </div>
 
-            {/* Client Phone */}
             <div>
-              <label className="block text-sm font-bold text-brand-ink mb-1.5">
-                {t.booking.phoneLabel}
+              <label className="block text-sm font-bold text-brand-espresso mb-1.5">
+                {t.modal.phoneLabel}
               </label>
               <input
                 type="tel"
                 dir="ltr"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder={t.booking.phonePlaceholder}
-                className="w-full px-4 py-3 rounded-xl border border-brand-plum/20 bg-white focus:outline-none focus:border-brand-plum text-sm"
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
+                }}
+                placeholder={t.modal.phonePlaceholder}
+                className="w-full px-4 py-3 rounded-xl bg-white border border-brand-sand focus:border-brand-gold focus:outline-none text-sm sm:text-base text-brand-espresso"
               />
               {errors.phone && (
-                <p className="text-xs text-red-600 font-semibold mt-1">{errors.phone}</p>
+                <p className="text-xs font-semibold text-red-600 mt-1">{errors.phone}</p>
               )}
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            {/* Service Selection */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-brand-ink mb-1.5">
-                {t.booking.serviceLabel}
+              <label className="block text-sm font-bold text-brand-espresso mb-1.5">
+                {t.modal.serviceLabel}
               </label>
               <select
                 value={service}
                 onChange={(e) => setService(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-brand-plum/20 bg-white focus:outline-none focus:border-brand-plum text-sm"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-brand-sand focus:border-brand-gold focus:outline-none text-sm sm:text-base text-brand-espresso"
               >
-                <option value="">{t.booking.servicePlaceholder}</option>
-                {t.services.items.map((item) => (
-                  <option key={item.id} value={item.title}>
-                    {item.title}
+                {serviceOptions.map((opt, idx) => (
+                  <option key={idx} value={opt}>
+                    {opt}
                   </option>
                 ))}
               </select>
-              {errors.service && (
-                <p className="text-xs text-red-600 font-semibold mt-1">{errors.service}</p>
-              )}
             </div>
 
-            {/* Desired Date */}
             <div>
-              <label className="block text-sm font-bold text-brand-ink mb-1.5">
-                {t.booking.dateLabel}
+              <label className="block text-sm font-bold text-brand-espresso mb-1.5">
+                {t.modal.dateLabel}
               </label>
               <input
                 type="date"
                 min={todayStr}
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-brand-plum/20 bg-white focus:outline-none focus:border-brand-plum text-sm"
+                onChange={(e) => handleDateChange(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-white border border-brand-sand focus:border-brand-gold focus:outline-none text-sm sm:text-base text-brand-espresso"
               />
               {errors.date && (
-                <p className="text-xs text-red-600 font-semibold mt-1">{errors.date}</p>
+                <p className="text-xs font-semibold text-red-600 mt-1">{errors.date}</p>
               )}
             </div>
           </div>
 
-          {/* 30-Minute Time Slots */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-bold text-brand-ink mb-2">
-              <Clock className="w-4 h-4 text-brand-gold" />
-              <span>{t.booking.timeLabel}</span>
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="flex items-center gap-1.5 text-sm font-bold text-brand-espresso">
+                <Clock className="w-4 h-4 text-brand-gold" />
+                <span>{t.modal.timeLabel}</span>
+              </label>
+            </div>
 
             {isSunday ? (
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm font-medium">
-                {t.booking.closedDayNotice}
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-sm font-medium flex items-center gap-2.5">
+                <AlertCircle className="w-5 h-5 text-amber-700 shrink-0" />
+                <span>{t.modal.noSlotsClosed}</span>
               </div>
-            ) : slots.length === 0 ? (
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm font-medium">
-                {t.booking.noSlotsNotice}
+            ) : slots.length === 0 || slots.every((s) => s.disabled) ? (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-sm font-medium flex items-center gap-2.5">
+                <AlertCircle className="w-5 h-5 text-amber-700 shrink-0" />
+                <span>{t.modal.noSlotsToday}</span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1">
-                {slots.map((slot) => (
-                  <button
-                    key={slot.value}
-                    type="button"
-                    disabled={slot.disabled}
-                    onClick={() => setTimeSlot(slot.value)}
-                    dir="ltr"
-                    className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all ${
-                      slot.disabled
-                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed line-through'
-                        : timeSlot === slot.value
-                        ? 'bg-brand-plum text-white border-brand-plum shadow-sm'
-                        : 'bg-brand-sand/50 text-brand-ink border-brand-plum/15 hover:border-brand-plum'
-                    }`}
-                  >
-                    {slot.label}
-                  </button>
-                ))}
+              <div
+                dir="ltr"
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1"
+              >
+                {slots.map((slot) => {
+                  const isSelected = selectedSlot === slot.label;
+                  return (
+                    <button
+                      key={slot.id}
+                      type="button"
+                      disabled={slot.disabled}
+                      onClick={() => {
+                        setSelectedSlot(slot.label);
+                        if (errors.time) setErrors((prev) => ({ ...prev, time: '' }));
+                      }}
+                      className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all ${
+                        slot.disabled
+                          ? 'bg-brand-sand/40 text-brand-taupe/45 border-brand-sand cursor-not-allowed line-through'
+                          : isSelected
+                          ? 'bg-brand-espresso text-white border-brand-espresso shadow-sm'
+                          : 'bg-white text-brand-espresso border-brand-sand hover:border-brand-gold'
+                      }`}
+                    >
+                      {slot.label}
+                    </button>
+                  );
+                })}
               </div>
             )}
             {errors.time && (
-              <p className="text-xs text-red-600 font-semibold mt-1">{errors.time}</p>
+              <p className="text-xs font-semibold text-red-600 mt-1.5">{errors.time}</p>
             )}
           </div>
 
-          {/* Additional Notes */}
           <div>
-            <label className="block text-sm font-bold text-brand-ink mb-1.5">
-              {t.booking.notesLabel}
+            <label className="block text-sm font-bold text-brand-espresso mb-1.5">
+              {t.modal.notesLabel}
             </label>
             <textarea
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={t.booking.notesPlaceholder}
-              className="w-full px-4 py-2.5 rounded-xl border border-brand-plum/20 bg-white focus:outline-none focus:border-brand-plum text-sm"
+              placeholder={t.modal.notesPlaceholder}
+              className="w-full px-4 py-2.5 rounded-xl bg-white border border-brand-sand focus:border-brand-gold focus:outline-none text-sm text-brand-espresso"
             />
           </div>
 
-          {/* Pending Confirmation Disclaimer */}
-          <div className="p-3.5 rounded-xl bg-brand-sand/70 border border-brand-gold/30 flex items-start gap-2.5 text-xs text-brand-ink/80">
-            <AlertCircle className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" />
-            <span>{t.booking.pendingNotice}</span>
+          <div className="p-3.5 rounded-2xl bg-brand-gold-soft/70 border border-brand-gold/30 text-xs sm:text-sm text-brand-espresso/90 leading-relaxed">
+            {t.modal.pendingNotice}
           </div>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-full bg-brand-plum hover:bg-brand-plumDark text-white font-bold text-base shadow-lg transition-all"
-          >
-            <Send className="w-5 h-5" />
-            <span>{t.booking.submitBtn}</span>
-          </button>
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-2 border-t border-brand-sand">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full sm:w-auto px-6 py-3 rounded-full bg-white border border-brand-sand hover:border-brand-espresso text-brand-espresso text-sm font-bold transition-colors"
+            >
+              {t.modal.cancelBtn}
+            </button>
+            <button
+              type="submit"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold shadow-glass transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>{t.modal.submitBtn}</span>
+            </button>
+          </div>
         </form>
       </div>
     </div>

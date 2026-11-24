@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import About from './components/About';
-import Services from './components/Services';
-import Cabinet from './components/Cabinet';
-import Testimonials from './components/Testimonials';
-import Footer from './components/Footer';
-import AppointmentModal from './components/AppointmentModal';
+import Navbar from './components/Navbar.jsx';
+import Hero from './components/Hero.jsx';
+import About from './components/About.jsx';
+import Services from './components/Services.jsx';
+import Cabinet from './components/Cabinet.jsx';
+import Testimonials from './components/Testimonials.jsx';
+import Footer from './components/Footer.jsx';
+import AppointmentModal from './components/AppointmentModal.jsx';
 
 export default function App() {
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -18,9 +18,9 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-brand-champagne text-brand-espresso">
       <Navbar onOpenBooking={handleOpenBooking} />
-      <main className="flex-1">
+      <main className="flex-grow">
         <Hero onOpenBooking={handleOpenBooking} />
         <About />
         <Services onOpenBooking={handleOpenBooking} />

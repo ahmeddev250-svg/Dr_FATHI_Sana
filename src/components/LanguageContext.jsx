@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { translations } from '../data/translations';
+import { translations } from '../translations.js';
 
 const LanguageContext = createContext();
 
@@ -8,17 +8,19 @@ export function LanguageProvider({ children }) {
 
   useEffect(() => {
     const dir = lang === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.setAttribute('dir', dir);
     document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', dir);
   }, [lang]);
 
-  const toggleLanguage = (newLang) => {
-    if (newLang === 'fr' || newLang === 'ar') {
-      setLang(newLang);
+  const toggleLanguage = (targetLang) => {
+    if (targetLang === 'fr' || targetLang === 'ar') {
+      setLang(targetLang);
+    } else {
+      setLang((prev) => (prev === 'fr' ? 'ar' : 'fr'));
     }
   };
 
-  const t = translations[lang];
+  const t = translations[lang] || translations.fr;
   const isRTL = lang === 'ar';
 
   return (
@@ -29,5 +31,9 @@ export function LanguageProvider({ children }) {
 }
 
 export function useLanguage() {
-  return useContext(LanguageContext);
+  const context = useContext(LanguageContext);
+  if (!context) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
 }

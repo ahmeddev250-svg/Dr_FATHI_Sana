@@ -1,70 +1,67 @@
 import React, { useState } from 'react';
-import { Phone, Calendar, Menu, X, Globe } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
-import { BUSINESS_INFO } from '../data/translations';
+import { Phone, Calendar, Menu, X } from 'lucide-react';
+import { useLanguage } from './LanguageContext.jsx';
+import { CLINIC_INFO } from '../translations.js';
 import logoImg from '../assets/images/logo.png';
 
 export default function Navbar({ onOpenBooking }) {
   const { lang, setLang, t } = useLanguage();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
     { href: '#accueil', label: t.nav.home },
-    { href: '#docteur', label: t.nav.about },
+    { href: '#medecin', label: t.nav.about },
     { href: '#soins', label: t.nav.services },
     { href: '#cabinet', label: t.nav.cabinet },
     { href: '#avis', label: t.nav.reviews },
+    { href: '#contact', label: t.nav.contact },
   ];
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50 glass-navigation">
+    <header className="fixed top-0 inset-x-0 z-40 glass-navigation">
       <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 sm:h-24 gap-4 lg:gap-6">
-          {/* Brand Logo & Name */}
+        <div className="flex items-center justify-between h-20 lg:h-24 gap-4 lg:gap-6">
           <a href="#accueil" className="flex items-center gap-3 shrink-0 group">
             <img
               src={logoImg}
-              alt={BUSINESS_INFO.clinicNameFr}
+              alt={CLINIC_INFO.clinicNameFr}
               className="h-14 w-14 sm:h-16 sm:w-16 object-contain transition-transform duration-300 group-hover:scale-105"
             />
-            <div className="flex flex-col">
-              <span className="text-lg sm:text-xl font-extrabold text-brand-plum tracking-tight whitespace-nowrap">
-                {t.brandTitle}
+            <div className="leading-tight">
+              <span className="block text-lg sm:text-xl font-extrabold text-brand-espresso tracking-tight whitespace-nowrap">
+                {t.nav.brand}
               </span>
-              <span className="text-xs sm:text-sm font-medium text-brand-ink/70 whitespace-nowrap">
-                {t.brandSubtitle}
+              <span className="block text-xs sm:text-sm font-medium text-brand-taupe whitespace-nowrap">
+                {t.nav.subtitle}
               </span>
             </div>
           </a>
 
-          {/* Desktop Navigation Links */}
           <nav className="hidden xl:flex items-center gap-5 2xl:gap-7">
-            {navLinks.map((link) => (
+            {navLinks.map((item) => (
               <a
-                key={link.href}
-                href={link.href}
-                className="text-base font-semibold text-brand-ink/85 hover:text-brand-plum transition-colors whitespace-nowrap shrink-0"
+                key={item.href}
+                href={item.href}
+                className="text-base font-semibold text-brand-espresso/85 hover:text-brand-gold transition-colors whitespace-nowrap shrink-0"
               >
-                {link.label}
+                {item.label}
               </a>
             ))}
           </nav>
 
-          {/* Actions */}
           <div className="hidden md:flex items-center gap-3 lg:gap-4 shrink-0">
-            {/* Language Switcher */}
             <div
-              className="inline-flex items-center rounded-full bg-brand-sand/80 p-1 border border-brand-plum/15 shrink-0"
+              className="inline-flex items-center rounded-full bg-brand-champagne border border-brand-gold/30 p-1"
               role="group"
-              aria-label="Language switcher"
+              aria-label="Language selector"
             >
               <button
                 type="button"
                 onClick={() => setLang('fr')}
-                className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+                className={`px-3 py-1 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
                   lang === 'fr'
-                    ? 'bg-brand-plum text-white shadow-sm'
-                    : 'text-brand-ink/75 hover:text-brand-plum'
+                    ? 'bg-brand-espresso text-white shadow-sm'
+                    : 'text-brand-espresso/75 hover:text-brand-espresso'
                 }`}
               >
                 FR
@@ -72,94 +69,88 @@ export default function Navbar({ onOpenBooking }) {
               <button
                 type="button"
                 onClick={() => setLang('ar')}
-                className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+                className={`px-3 py-1 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
                   lang === 'ar'
-                    ? 'bg-brand-plum text-white shadow-sm'
-                    : 'text-brand-ink/75 hover:text-brand-plum'
+                    ? 'bg-brand-espresso text-white shadow-sm'
+                    : 'text-brand-espresso/75 hover:text-brand-espresso'
                 }`}
               >
                 AR
               </button>
             </div>
 
-            {/* Direct Phone Pill */}
             <a
-              href={`tel:${BUSINESS_INFO.phoneTel}`}
+              href={`tel:${CLINIC_INFO.phoneRaw}`}
+              aria-label={t.nav.callAria}
               dir="ltr"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-brand-plum/20 bg-white/80 text-brand-plum hover:bg-brand-plum hover:text-white transition-all text-sm font-bold whitespace-nowrap shrink-0"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/90 border border-brand-gold/35 text-brand-espresso hover:border-brand-gold text-sm font-bold shadow-sm transition-all whitespace-nowrap shrink-0"
             >
-              <Phone className="w-4 h-4 shrink-0" />
-              <span>{BUSINESS_INFO.phoneDisplay}</span>
+              <Phone className="w-4 h-4 text-brand-gold shrink-0" />
+              <span>{CLINIC_INFO.phoneDisplay}</span>
             </a>
 
-            {/* Appointment Trigger */}
             <button
               type="button"
-              onClick={() => onOpenBooking('')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-plum text-white hover:bg-brand-plumDark shadow-md hover:shadow-lg transition-all text-sm font-bold whitespace-nowrap shrink-0"
+              onClick={() => onOpenBooking()}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-espresso hover:bg-brand-espresso-deep text-white text-sm font-bold shadow-glass transition-all whitespace-nowrap shrink-0"
             >
-              <Calendar className="w-4 h-4 shrink-0" />
+              <Calendar className="w-4 h-4 text-brand-gold-light shrink-0" />
               <span>{t.nav.bookBtn}</span>
             </button>
           </div>
 
-          {/* Mobile Controls */}
-          <div className="flex xl:hidden items-center gap-2">
+          <div className="flex md:hidden items-center gap-2">
             <button
               type="button"
               onClick={() => setLang(lang === 'fr' ? 'ar' : 'fr')}
-              className="md:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-brand-sand text-brand-plum text-sm font-bold border border-brand-plum/15"
+              className="px-3 py-1.5 rounded-full bg-brand-champagne border border-brand-gold/35 text-xs font-bold text-brand-espresso"
             >
-              <Globe className="w-4 h-4" />
-              <span>{lang === 'fr' ? 'AR' : 'FR'}</span>
+              {lang === 'fr' ? 'AR' : 'FR'}
             </button>
-
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2.5 rounded-xl bg-white/80 border border-brand-plum/15 text-brand-plum hover:bg-brand-sand transition-colors"
-              aria-label="Toggle Menu"
+              onClick={() => setMobileOpen((prev) => !prev)}
+              aria-label={mobileOpen ? t.nav.menuClose : t.nav.menuOpen}
+              className="p-2.5 rounded-xl bg-white/85 border border-brand-gold/25 text-brand-espresso"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Dropdown Drawer */}
-      {mobileMenuOpen && (
-        <div className="xl:hidden bg-white/95 backdrop-blur-xl border-b border-brand-plum/10 px-4 pt-3 pb-6 space-y-4 shadow-xl">
+      {mobileOpen && (
+        <div className="md:hidden bg-brand-ivory/95 backdrop-blur-xl border-t border-brand-gold/20 px-4 pt-4 pb-6 space-y-4 shadow-glass-lg">
           <nav className="flex flex-col space-y-2">
-            {navLinks.map((link) => (
+            {navLinks.map((item) => (
               <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-3 rounded-xl text-base font-semibold text-brand-ink hover:bg-brand-sand/70 hover:text-brand-plum transition-colors"
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="px-3 py-2.5 rounded-xl text-base font-semibold text-brand-espresso hover:bg-brand-gold-soft/50 transition-colors"
               >
-                {link.label}
+                {item.label}
               </a>
             ))}
           </nav>
-
-          <div className="pt-2 border-t border-brand-plum/10 flex flex-col sm:flex-row gap-3">
+          <div className="pt-2 border-t border-brand-sand flex flex-col gap-3">
             <a
-              href={`tel:${BUSINESS_INFO.phoneTel}`}
+              href={`tel:${CLINIC_INFO.phoneRaw}`}
               dir="ltr"
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full border border-brand-plum/25 text-brand-plum font-bold text-sm"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-white border border-brand-gold/40 text-brand-espresso text-sm font-bold"
             >
-              <Phone className="w-4 h-4" />
-              <span>{BUSINESS_INFO.phoneDisplay}</span>
+              <Phone className="w-4 h-4 text-brand-gold" />
+              <span>{CLINIC_INFO.phoneDisplay}</span>
             </a>
             <button
               type="button"
               onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenBooking('');
+                setMobileOpen(false);
+                onOpenBooking();
               }}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-brand-plum text-white font-bold text-sm shadow-md"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-brand-espresso text-white text-sm font-bold"
             >
-              <Calendar className="w-4 h-4" />
+              <Calendar className="w-4 h-4 text-brand-gold-light" />
               <span>{t.nav.bookBtn}</span>
             </button>
           </div>
