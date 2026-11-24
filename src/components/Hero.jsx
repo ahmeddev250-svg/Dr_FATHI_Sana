@@ -34,11 +34,11 @@ export default function Hero({ onOpenBooking }) {
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-24 -end-24 w-96 h-96 rounded-full bg-brand-gold/15 blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute bottom-10 -start-24 w-80 h-80 rounded-full bg-brand-gold-light/25 blur-3xl"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(196, 154, 69, 0.16) 0%, rgba(196, 154, 69, 0) 70%)',
+        }}
+        className="pointer-events-none absolute -top-24 -end-24 w-96 h-96 rounded-full"
       />
 
       <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 relative">
